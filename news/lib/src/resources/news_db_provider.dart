@@ -1,3 +1,4 @@
+import 'package:news/src/resources/repository.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
@@ -5,8 +6,12 @@ import 'package:path/path.dart';
 import '../models/item_model.dart';
 import 'dart:async';
 
-class NewsDbProvider {
+class NewsDbProvider implements Source, Cache {
   Database db;
+
+  NewsDbProvider() {
+    init();
+  }
 
   void init() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
@@ -22,16 +27,23 @@ class NewsDbProvider {
               type TEXT,
               by TEXT,
               time INTEGER,
+              text TEXT,
               parent INTEGER,
               kids BLOB,
+              url TEXT,
               dead INTEGER,
               deleted INTEGER,
               score INTEGER,
+              title TEXT,
               descendants INTEGER
             )
         """);
       },
     );
+  }
+
+  Future<List<int>> fetchTopIds() {
+    return null;
   }
 
   Future<ItemModel> fetchItem(int id) async {
@@ -50,6 +62,13 @@ class NewsDbProvider {
   }
 
   Future<int> addItem(ItemModel item) {
-    return db.insert("Items", item.toMap());
+    return db.insert("Items", item.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  Future<int> clear() {
+    return db.delete("Items");
   }
 }
+
+final newsDbProvider = NewsDbProvider();
